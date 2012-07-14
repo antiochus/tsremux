@@ -1,0 +1,33 @@
+0.23.2 (hobBIT)
+---------------
+- Output of detected stream metrics to stream selection list added.
+- Demux as output added, extracts multiple elemetary streams at once.
+
+0.23.1 (hobBIT)
+---------------
+- Application installer added (incl. required MPlayer).
+- MPlayer integration, video is visible/controllable inside TsRemux now.
+- Complete UI revamp.
+- File extension filter in file dialogs are configurable now.
+
+0.22.1 (hobBIT)
+---------------
+- Trim points can be set using mplayer visually.
+- Output file dialog now offers the name of the filename in the input box.
+
+Pre 0.22:
+---------
+
+I wanted to use tsremux0020 to remux some MPEG2 mixed program streams files (.mpg). But every time I tried to open one it failed with an exception dialog  (System.NullReferenceException: ...at TsRemux.TsRemux.EnableCbxMlp() etc.). After poking around in the source code and debugger for a while I found that this problem resulted from code trying to allocate an IO buffer of about 72MB when processing files of this variety.  That was a simple fix: just take off the "<< 2" (which is the same as "* 4") at what was line 463 in TsToPes.cs.  With that fix the program would process the files OK.
+
+But, it seemed somewhat slow, compared to other muxes and to its own processing of TS files.  I dug into that and found that the code was processing PS files byte-by-byte; and I found two relatively simple optimizations (don't call System.ArrayCopy in the TsIo.Read() function if the caller requested a single byte, and process in bigger chunks in the EvoPesFile.GetNextPesPackets() function, after the point where it has found a length ).  In my testing these speeded up remuxing from mpg to m2ts by a factor of about 2.5 to about 3.6 (depending on which machine I was testing on), making it comparable to the speed of ts>>m2ts remux, with ouptut files exactly identical to the output from before I made these changes.
+
+I thought it would be really handy to be run TsRemux from the command line, so I added that capability.  If you start with no arguments it runs as before, with arguments it runs in command mode.  For an explanation of the arguments just run it with one (e.g. tsremux00201 ?) and since the minimum useful args count is 2, it list the usage and quits.  On WinXP it attaches the command window as its console; this doesn't work on Win2k, so in that case it opens a console-like window instead.
+
+To help compare remux times accurately, I changed it when running in windowed mode to display the elapsed time in the Remux Progress textbox when the remux is done (command mode reports times for begin and end).  Finally, I changed the open output UI to use a directory picker dialog, rather than a file open dialog, if you have selected Blu-Ray as the output option.  
+
+As dmz has published the tsremux source code under GPL, of course my own contributions are GPL also. I invite dmz to take them up in a future release. I offer them "in the hope that they will be useful" but "without warranty of any kind". 
+
+With thanks to dmz for his fine work in developing tsremux, and extra thanks for publishing the source, 
+
+"spacecat56"
